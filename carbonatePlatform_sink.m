@@ -1,6 +1,7 @@
 %------------------------------
 % GEOL 5700 
-% Model the growth/drowning of coral platforms
+% Model the growth/drowning of coral platforms given a flexing plate 
+%   under an advancing load
 %------------------------------
 % Franklin Hinckley
 %------------------------------
@@ -18,16 +19,32 @@ loadPos = 100*1000; % distance from load to land edge [m]
 %% Define function for sea level
 A = 120/2; % half-amplitude of sea level variation [m]
 P = 20000; % period of oscillation [yr]
-B = (2*pi)/20000; 
+B = (2*pi)/P; 
 C = 0; % phase of oscillation at initial time [rad]
 D = 0; % mean sea level relative to reference height [m]
 SL_func = @(t) A * sin(B * t + C) + D;
 
+%% Load/parse del-O18 data
+% Load data file
+o18 = load('pleist_del18O.txt');
+
+% Parse out time and rescale
+o18_time = -o18(:,1)*1000; % convert ka to yr and make the past -time
+
+% Parse out data and rescale
+o18_data = o18(:,2);
+o18_data = -60 + 120*((o18_data-min(o18_data))./(max(o18_data)-min(o18_data)));
+
 %% Define simulation parameters
 % Simulation time
 tStep = 100; % simulation time step [yr] 
-tSim = 500000; % simulation duration [yr]
-tVec = 0:tStep:tSim;
+%tSim = 100000; % simulation duration [yr] for sinusoid
+tSim = -min(o18_time); % simulation duration [yr] for del-o18
+tVec = 0:tStep:500000;
+
+% Flip simulation time vector and multiply by -1
+%   so it starts at -time relative to now and counts forward
+tVec = -fliplr(tVec); % only for del-o18
 
 %% Set up initial conditions
 posVec = fliplr(0:conRate*tStep:loadPos);
@@ -44,7 +61,8 @@ plateDepth = plateFlexure(w0,posVec);
 % Run simulation
 for ii = 1:length(tVec)            
     % Evaluate sea level 
-    SL = SL_func(tVec(ii));
+    %SL = SL_func(tVec(ii)); % sinusoidal model
+    SL = interp1(o18_time,o18_data,tVec(ii));
     
     % Evaluate coral growth rate
     G = zeros(size(carbThick));
@@ -74,10 +92,6 @@ for ii = 1:length(tVec)
 end
 
 %% Plots
-% Final state
-figure
-plot(posVec,carbThick_save(:,end))
-
 % Animation
 pL = 1500; % low plot index
 pH = 3000; % high plot index
