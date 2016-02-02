@@ -38,13 +38,13 @@ o18_data = -60 + 120*((o18_data-min(o18_data))./(max(o18_data)-min(o18_data)));
 %% Define simulation parameters
 % Simulation time
 tStep = 100; % simulation time step [yr] 
-%tSim = 100000; % simulation duration [yr] for sinusoid
-tSim = -min(o18_time); % simulation duration [yr] for del-o18
-tVec = 0:tStep:500000;
+tSim = 100000; % simulation duration [yr] for sinusoid
+%tSim = -min(o18_time); % simulation duration [yr] for del-o18
+tVec = 0:tStep:tSim;
 
 % Flip simulation time vector and multiply by -1
 %   so it starts at -time relative to now and counts forward
-tVec = -fliplr(tVec); % only for del-o18
+%tVec = -fliplr(tVec); % only for del-o18
 
 %% Set up initial conditions
 posVec = fliplr(0:conRate*tStep:loadPos);
@@ -61,8 +61,8 @@ plateDepth = plateFlexure(w0,posVec);
 % Run simulation
 for ii = 1:length(tVec)            
     % Evaluate sea level 
-    %SL = SL_func(tVec(ii)); % sinusoidal model
-    SL = interp1(o18_time,o18_data,tVec(ii));
+    SL = SL_func(tVec(ii)); % sinusoidal model
+    %SL = interp1(o18_time,o18_data,tVec(ii));
     
     % Evaluate coral growth rate
     G = zeros(size(carbThick));
